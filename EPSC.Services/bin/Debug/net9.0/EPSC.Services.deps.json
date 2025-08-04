@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "EPSC.Services/1.0.0": {
+        "dependencies": {
+          "EPSC.Domain": "1.0.0",
+          "EPSC.Infrastructure": "1.0.0"
+        },
+        "runtime": {
+          "EPSC.Services.dll": {}
+        }
+      },
+      "EPSC.Domain/1.0.0": {
+        "runtime": {
+          "EPSC.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "EPSC.Infrastructure/1.0.0": {
+        "dependencies": {
+          "EPSC.Domain": "1.0.0"
+        },
+        "runtime": {
+          "EPSC.Infrastructure.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "EPSC.Services/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "EPSC.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "EPSC.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

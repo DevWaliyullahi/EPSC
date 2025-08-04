@@ -1,0 +1,11 @@
+C:\EPSC\EPSC.Domain\bin\Debug\net9.0\EPSC.Domain.deps.json
+C:\EPSC\EPSC.Domain\bin\Debug\net9.0\EPSC.Domain.dll
+C:\EPSC\EPSC.Domain\bin\Debug\net9.0\EPSC.Domain.pdb
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.AssemblyInfoInputs.cache
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.AssemblyInfo.cs
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.csproj.CoreCompileInputs.cache
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.dll
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\refint\EPSC.Domain.dll
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\EPSC.Domain.pdb
+C:\EPSC\EPSC.Domain\obj\Debug\net9.0\ref\EPSC.Domain.dll

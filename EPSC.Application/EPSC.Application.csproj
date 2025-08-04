@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dto\Contribution\" />
+    <Folder Include="Interfaces\IUnitOfWork\" />
+    <Folder Include="Interfaces\IBenefitEligibilityService\" />
+    <Folder Include="Interfaces\IContributionService\" />
+    <Folder Include="Interfaces\IMemberService\" />
+    <Folder Include="Dto\Member\" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

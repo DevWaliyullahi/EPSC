@@ -1,0 +1,15 @@
+C:\EPSC\EPSC.Infrastructure\bin\Debug\net9.0\EPSC.Infrastructure.deps.json
+C:\EPSC\EPSC.Infrastructure\bin\Debug\net9.0\EPSC.Infrastructure.dll
+C:\EPSC\EPSC.Infrastructure\bin\Debug\net9.0\EPSC.Infrastructure.pdb
+C:\EPSC\EPSC.Infrastructure\bin\Debug\net9.0\EPSC.Domain.dll
+C:\EPSC\EPSC.Infrastructure\bin\Debug\net9.0\EPSC.Domain.pdb
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.csproj.AssemblyReference.cache
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.AssemblyInfoInputs.cache
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.AssemblyInfo.cs
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.csproj.CoreCompileInputs.cache
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Inf.9EDC194D.Up2Date
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.dll
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\refint\EPSC.Infrastructure.dll
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\EPSC.Infrastructure.pdb
+C:\EPSC\EPSC.Infrastructure\obj\Debug\net9.0\ref\EPSC.Infrastructure.dll
