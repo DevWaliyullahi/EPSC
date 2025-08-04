@@ -1,7 +1,0 @@
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.csproj.AssemblyReference.cache
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.GeneratedMSBuildEditorConfig.editorconfig
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.AssemblyInfoInputs.cache
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.AssemblyInfo.cs
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.csproj.CoreCompileInputs.cache
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.MvcApplicationPartsAssemblyInfo.cs
-C:\EPSC\EPSC.API\obj\Debug\net9.0\EPSC.API.MvcApplicationPartsAssemblyInfo.cache
