@@ -1,5 +1,10 @@
+using EPSC.Infrastructure.Configurations.Data;
+using EPSC.Infrastructure.Configurations.Initializers;
+using EPSC.Infrastructure.Identity.Auth;
+using EPSC.Utility.Configurations;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -8,32 +13,82 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//  Configuration 
+// Configuration 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<GlobalSettings>(builder.Configuration.GetSection("GlobalSettings"));
 
+// DbContext
 builder.Services.AddDbContext<EPSCDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default"), sqlOptions =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
         sqlOptions.MigrationsAssembly("EPSC.Infrastructure");
     });
 });
 
-//  Hangfire config
+// Identity with custom user and role
+builder.Services.AddIdentity<EPSAuthUser, EPSAuthRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<EPSCDbContext>()
+.AddDefaultTokenProviders();
+
+// JWT Authentication
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+if (jwtSettingsSection.Exists())
+{
+    var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+    if (jwtSettings != null)
+    {
+        var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+        });
+    }
+    else
+    {
+        throw new InvalidOperationException("JwtSettings configuration is missing or invalid.");
+    }
+}
+else
+{
+    throw new InvalidOperationException("JwtSettings section is missing in the configuration.");
+}
+
+// Hangfire setup
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("Default")));
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
 
-//  Controllers  config
+// Controller setup
 builder.Services.AddControllers().AddJsonOptions(opt =>
 {
     opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     opt.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
-//  Swagger config
+// Swagger setup
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opt =>
 {
@@ -55,32 +110,46 @@ builder.Services.AddSwaggerGen(opt =>
     opt.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
             Array.Empty<string>()
         }
     });
 });
 
-//  Authentication placeholder
-// builder.Services.AddAuthentication(...);
-// builder.Services.AddAuthorization();
+// Scoped services
+builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
 var app = builder.Build();
 
-// Middleware
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EPSC API v1");
+        c.RoutePrefix = string.Empty;
+    });
 }
+
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthentication(); 
 app.UseAuthorization();
 
-//  Hangfire Dashboard
+// Hangfire dashboard
 app.UseHangfireDashboard("/hangfire");
 
-app.MapControllers();
+// Database seeding
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+    await initializer.SeedAsync();
+}
 
+app.MapControllers();
 app.Run();

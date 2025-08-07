@@ -1,24 +1,37 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
+		<PackageReference Include="Hangfire.SqlServer" Version="1.8.20" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.8" />
+		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.13.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EPSC.Application\EPSC.Application.csproj" />
-    <ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
-    <ProjectReference Include="..\EPSC.Infrastructure\EPSC.Infrastructure.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EPSC.Application\EPSC.Application.csproj" />
+		<ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
+		<ProjectReference Include="..\EPSC.Infrastructure\EPSC.Infrastructure.csproj" />
+		<ProjectReference Include="..\EPSC.Utility\EPSC.Utility.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\MembersController\" />
-    <Folder Include="Controllers\ContributionsController\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Controllers\MembersController\" />
+		<Folder Include="Controllers\ContributionsController\" />
+	</ItemGroup>
 
 </Project>
