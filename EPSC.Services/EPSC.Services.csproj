@@ -1,8 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="RPNL.Net.Utilities" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\EPSC.Infrastructure\EPSC.Infrastructure.csproj" />
     <ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
+    <ProjectReference Include="..\EPSC.Application\EPSC.Application.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

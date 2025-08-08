@@ -1,9 +1,7 @@
 ﻿using EPSC.Infrastructure.Identity.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-
-
-
+using EPSC.Domain.Entities.Member;
 
 
 namespace EPSC.Infrastructure.Configurations.Data
@@ -12,8 +10,8 @@ namespace EPSC.Infrastructure.Configurations.Data
     {
         public EPSCDbContext(DbContextOptions<EPSCDbContext> options) : base(options) { }
 
-        // Your domain DbSets
-        //public DbSet<TMember> TMembers { get; set; }
+        //  DbSets
+        public DbSet<TMember> TMembers { get; set; }
        // public DbSet<TContribution> TContributions { get; set; }
         // ...
     }

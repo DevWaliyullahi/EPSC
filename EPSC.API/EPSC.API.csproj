@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
 		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
 		<PackageReference Include="Hangfire.SqlServer" Version="1.8.20" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
@@ -19,6 +20,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.8" />
 		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.13.0" />
+		<PackageReference Include="RPNL.Net.Utilities" Version="2.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
 	</ItemGroup>
 
@@ -27,10 +29,10 @@
 		<ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
 		<ProjectReference Include="..\EPSC.Infrastructure\EPSC.Infrastructure.csproj" />
 		<ProjectReference Include="..\EPSC.Utility\EPSC.Utility.csproj" />
+		<ProjectReference Include="..\EPSC.Services\EPSC.Services.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Controllers\MembersController\" />
 		<Folder Include="Controllers\ContributionsController\" />
 	</ItemGroup>
 
