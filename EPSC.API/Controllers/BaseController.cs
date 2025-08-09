@@ -1,4 +1,5 @@
-﻿using EPSC.Application.DTOs.Member;
+﻿using EPSC.API.Controllers.MembersController;
+using EPSC.Application.DTOs.Member;
 using Microsoft.AspNetCore.Mvc;
 using RPNL.Net.Utilities.ResponseUtil;
 
@@ -35,22 +36,20 @@ namespace EPSC.API.Controllers
             {
                 if (result.Code == ErrorCodes.DataNotFound)
                     return NotFound(result);
-
                 return BadRequest(result);
             }
 
-            // Return CreatedAtAction for POST requests that return MemberViewModel
-            if (Request.Method == "POST" && typeof(T) == typeof(MemberViewModel))
+            // Handle POST requests for member creation
+            if (HttpMethods.IsPost(Request?.Method ?? string.Empty) && result.Data is MemberViewModel member)
             {
-                var member = result.Data as MemberViewModel;
-                if (member != null)
-                {
-                    return CreatedAtAction(nameof(MembersController.MemberController.GetMemberById),
-                        new { id = member.MemberId }, member);
-                }
+                if (member.MemberId == Guid.Empty)
+                    return BadRequest("MemberId cannot be empty.");
+
+                // Use the correct action name that matches your controller method
+                return CreatedAtAction(nameof(MemberController.GetMemberById), new { id = member.MemberId }, result);
             }
 
-            // Default success response is 200 OK with data
+            // For all other successful operations (GET, PUT)
             return Ok(result);
         }
 
@@ -63,15 +62,13 @@ namespace EPSC.API.Controllers
             {
                 if (result.Code == ErrorCodes.DataNotFound)
                     return NotFound(result);
-
                 return BadRequest(result);
             }
 
-            // Return NoContent for successful DELETE requests
-            if (Request.Method == "DELETE")
+            // Return NoContent for successful DELETE operations
+            if (HttpMethods.IsDelete(Request?.Method ?? string.Empty))
                 return NoContent();
 
-            // Default success response is 200 OK
             return Ok(result);
         }
     }

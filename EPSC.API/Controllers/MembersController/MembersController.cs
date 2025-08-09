@@ -9,16 +9,20 @@ namespace EPSC.API.Controllers.MembersController
     public class MemberController : BaseController
     {
         private readonly IMemberService _memberService;
+
         public MemberController(IMemberService memberService) => _memberService = memberService;
 
         /// <summary>
         /// Creates a new member in the system.
         /// </summary>
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateMember(MemberCreateDto dto)
+        [HttpPost]
+        public async Task<IActionResult> CreateMember([FromBody] MemberCreateDto dto)
         {
+            if (!ModelState.IsValid)
+                return NotifyModelStateError();
+
             var result = await _memberService.CreateMemberAsync(dto);
-            return Response(result);
+            return Response(result); // Use BaseController.Response() for consistent handling
         }
 
         /// <summary>
@@ -32,9 +36,9 @@ namespace EPSC.API.Controllers.MembersController
         }
 
         /// <summary>
-        /// Retrieves all members in the system.
+        /// Retrieves all members in the system with optional filtering and pagination.
         /// </summary>
-        [HttpGet("getAll")]
+        [HttpGet]
         public async Task<IActionResult> GetAllMembers([FromQuery] MemberSearchDto payload)
         {
             var result = await _memberService.GetAllMembersAsync(payload);
@@ -44,11 +48,14 @@ namespace EPSC.API.Controllers.MembersController
         /// <summary>
         /// Updates an existing member's information.
         /// </summary>
-        [HttpPut("update/{memberId}")]
+        [HttpPut("{memberId}")]
         public async Task<IActionResult> UpdateMember(Guid memberId, [FromBody] MemberUpdateDto dto)
         {
+            if (!ModelState.IsValid)
+                return NotifyModelStateError();
+
             var result = await _memberService.UpdateMemberAsync(memberId, dto);
-            return Response(result);
+            return Response(result); // Use BaseController.Response() for consistent handling
         }
 
         /// <summary>
@@ -58,7 +65,7 @@ namespace EPSC.API.Controllers.MembersController
         public async Task<IActionResult> SoftDeleteMember(Guid id)
         {
             var result = await _memberService.SoftDeleteMemberAsync(id);
-            return Response(result);
+            return Response(result); // Use BaseController.Response() for consistent handling
         }
     }
 }

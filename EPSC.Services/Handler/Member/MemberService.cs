@@ -19,12 +19,25 @@ namespace EPSC.Services.Handler.Member
             _logger = logger;
         }
 
+        /// <summary>
+        /// Creates a new member with the provided details.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         public async Task<ResponseModel<MemberViewModel>> CreateMemberAsync(MemberCreateDto dto)
         {
             var response = new ResponseModel<MemberViewModel>();
 
             try
             {
+                if (await _repository.EmailExistsAsync(dto.Email))
+                {
+                    response.Code = ErrorCodes.Failed;
+                    response.Success = false;
+                    response.Message = "Email already exists.";
+                    return response;
+                }
+
                 var member = new TMember
                 {
                     MemberId = Guid.NewGuid(),
@@ -67,6 +80,11 @@ namespace EPSC.Services.Handler.Member
             return response;
         }
 
+        /// <summary>
+        /// Retrieves a member by their unique identifier.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<ResponseModel<MemberViewModel>> GetMemberAsync(Guid id)
         {
             var response = new ResponseModel<MemberViewModel>();
@@ -112,35 +130,18 @@ namespace EPSC.Services.Handler.Member
             return response;
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of members based on search criteria.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns></returns>
         public async Task<ResponseModel<PagedResponse<MemberViewModel>>> GetAllMembersAsync(MemberSearchDto payload)
         {
             var response = new ResponseModel<PagedResponse<MemberViewModel>>();
 
             try
             {
-                var query = _repository.Query();
-
-                if (!string.IsNullOrWhiteSpace(payload.Name))
-                {
-                    query = query.Where(m => m.FirstName.Contains(payload.Name) || m.LastName.Contains(payload.Name));
-                }
-
-                if (payload.Status.HasValue)
-                {
-                    query = query.Where(m => m.Status == payload.Status.Value);
-                }
-
-                query = query.Where(m => !m.IsDeleted);
-
-                var projectedQuery = query.Select(m => new MemberViewModel
-                {
-                    MemberId = m.MemberId,
-                    FullName = m.FirstName + " " + m.LastName,
-                    Email = m.Email,
-                    Status = m.Status,
-                });
-
-                var pagedResult = await projectedQuery.ToPagedResponseAsync(payload.PageNumber, payload.PageSize);
+                var pagedResult = await _repository.GetMembersPagedAsync(payload);
 
                 response.Code = ErrorCodes.Successful;
                 response.Success = true;
@@ -157,6 +158,13 @@ namespace EPSC.Services.Handler.Member
             return response;
         }
 
+
+        /// <summary>
+        /// Updates an existing member's details.
+        /// </summary>
+        /// <param name="memberId"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         public async Task<ResponseModel<MemberViewModel>> UpdateMemberAsync(Guid memberId, MemberUpdateDto dto)
         {
             var response = new ResponseModel<MemberViewModel>();
@@ -169,6 +177,14 @@ namespace EPSC.Services.Handler.Member
                     response.Code = ErrorCodes.DataNotFound;
                     response.Success = false;
                     response.Message = "Member not found.";
+                    return response;
+                }
+
+                if (await _repository.EmailExistsAsync(dto.Email, memberId))
+                {
+                    response.Code = ErrorCodes.Failed;
+                    response.Success = false;
+                    response.Message = "Email already exists.";
                     return response;
                 }
 
@@ -214,6 +230,11 @@ namespace EPSC.Services.Handler.Member
             return response;
         }
 
+        /// <summary>
+        /// Soft deletes a member by marking them as deleted without removing from the database.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<ResponseModel> SoftDeleteMemberAsync(Guid id)
         {
             var response = new ResponseModel();

@@ -104,6 +104,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 
 builder.Services.AddValidatorsFromAssemblyContaining<MemberCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<MemberUpdateDtoValidator>();
 
 // Swagger setup
 builder.Services.AddEndpointsApiExplorer();

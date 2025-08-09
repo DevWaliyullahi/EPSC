@@ -2,8 +2,8 @@
 using EPSC.Domain.Entities.Member;
 using EPSC.Services.Handler.Member;
 using EPSC.Services.Repositories;
-using EPSC.Tests.Helper;
 using EPSC.Utility.Enums;
+using EPSC.Utility.Pagination;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -27,11 +27,14 @@ namespace EPSC.Tests
         {
             TMember savedMember = null!;
             _repositoryMock.Setup(r => r.AddAsync(It.IsAny<TMember>()))
-                .Callback<TMember>(m => savedMember = m)
-                .Returns(Task.CompletedTask);
+                .Returns(Task.CompletedTask)
+                .Callback<TMember>(m => savedMember = m);
 
             _repositoryMock.Setup(r => r.SaveChangesAsync())
                 .Returns(Task.CompletedTask);
+
+            _repositoryMock.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), null))
+                .ReturnsAsync(false);
 
             var dto = new MemberCreateDto
             {
@@ -81,6 +84,9 @@ namespace EPSC.Tests
             _repositoryMock.Setup(r => r.SaveChangesAsync())
                 .Returns(Task.CompletedTask);
 
+            _repositoryMock.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), existingMember.MemberId))
+                .ReturnsAsync(false);
+
             var dto = new MemberUpdateDto
             {
                 Id = existingMember.MemberId,
@@ -116,23 +122,21 @@ namespace EPSC.Tests
         [Fact]
         public async Task GetAllMembersAsync_Should_Return_Filtered_Paged_Result()
         {
-            var members = new List<TMember>
-           {
-               MemberTestHelper.GetSampleMember(),
-               MemberTestHelper.GetSampleMember(),
-               new TMember
-               {
-                   MemberId = Guid.NewGuid(),
-                   FirstName = "Alice",
-                   LastName = "Smith",
-                   Email = "alice@example.com",
-                   DateOfBirth = DateTime.Today.AddYears(-25),
-                   Status = MemberStatus.Active,  
-                   IsDeleted = false
-               }
-           }.AsQueryable();
+            var expectedMembers = new List<MemberViewModel>
+            {
+                new MemberViewModel
+                {
+                    MemberId = Guid.NewGuid(),
+                    FullName = "Alice Smith",
+                    Email = "alice@example.com",
+                    Status = MemberStatus.Active,
+                    PhoneNumber = "+1234567890",
+                    DateOfBirth = DateTime.Today.AddYears(-25),
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
 
-            _repositoryMock.SetupQuery(members);
+            var expectedPagedResult = new PagedResponse<MemberViewModel>(expectedMembers, 1, 1, 10);
 
             var searchDto = new MemberSearchDto
             {
@@ -141,20 +145,39 @@ namespace EPSC.Tests
                 PageSize = 10
             };
 
+            _repositoryMock.Setup(r => r.GetMembersPagedAsync(searchDto))
+                .ReturnsAsync(expectedPagedResult);
+
             var result = await _service.GetAllMembersAsync(searchDto);
 
+            // Assert
             Assert.True(result.Success);
+            Assert.NotNull(result.Data);
             Assert.Single(result.Data.Data);
-            Assert.Contains("Alice", result.Data.Data.First().FullName);
+            Assert.Equal("Alice Smith", result.Data.Data.First().FullName);
+            Assert.Equal(1, result.Data.MetaData.TotalItems);
+            Assert.Equal(1, result.Data.MetaData.PageNumber);
+            Assert.Equal(10, result.Data.MetaData.PageSize);
         }
 
         [Fact]
         public async Task UpdateMemberAsync_Should_Return_NotFound_When_Member_Does_Not_Exist()
         {
             var nonExistingId = Guid.NewGuid();
-            _repositoryMock.SetupGetById(nonExistingId, null);
 
-            var dto = MemberTestHelper.GetValidUpdateDto(nonExistingId);
+            // Setup GetByIdAsync to return null for non-existing member
+            _repositoryMock.Setup(r => r.GetByIdAsync(nonExistingId))
+                .ReturnsAsync((TMember?)null);
+
+            var dto = new MemberUpdateDto
+            {
+                Id = nonExistingId,
+                FirstName = "Test",
+                LastName = "User",
+                Email = "test@example.com",
+                PhoneNumber = "+1234567890",
+                DateOfBirth = DateTime.Today.AddYears(-30)
+            };
 
             var result = await _service.UpdateMemberAsync(nonExistingId, dto);
 
@@ -165,16 +188,22 @@ namespace EPSC.Tests
         [Fact]
         public async Task SoftDeleteMemberAsync_Should_Return_NotFound_If_Already_Deleted()
         {
-            var existingMember = MemberTestHelper.GetSampleMember();
-            existingMember.IsDeleted = true;
+            var existingMember = new TMember
+            {
+                MemberId = Guid.NewGuid(),
+                FirstName = "Test",
+                LastName = "User",
+                Email = "test@example.com",
+                IsDeleted = true 
+            };
 
-            _repositoryMock.SetupGetById(existingMember.MemberId, existingMember);
+            _repositoryMock.Setup(r => r.GetByIdAsync(existingMember.MemberId))
+                .ReturnsAsync(existingMember);
 
             var result = await _service.SoftDeleteMemberAsync(existingMember.MemberId);
 
             Assert.False(result.Success);
             Assert.Equal("Member not found.", result.Message);
         }
-
     }
 }
