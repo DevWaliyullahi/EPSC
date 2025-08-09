@@ -2,14 +2,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EPSC.Domain\EPSC.Domain.csproj" />
+    <ProjectReference Include="..\EPSC.Utility\EPSC.Utility.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Enums\" />
     <Folder Include="Interfaces\IUnitOfWork\" />
     <Folder Include="Interfaces\IBenefitEligibilityService\" />
     <Folder Include="Interfaces\IContributionService\" />
-    <Folder Include="Interfaces\IMemberService\" />
-    <Folder Include="Dto\Member\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RPNL.Net.Utilities" Version="2.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

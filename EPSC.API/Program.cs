@@ -1,7 +1,13 @@
+using EPSC.Application.Interfaces.IMemberService;
 using EPSC.Infrastructure.Configurations.Data;
 using EPSC.Infrastructure.Configurations.Initializers;
 using EPSC.Infrastructure.Identity.Auth;
+using EPSC.Services.Handler.Member;
+using EPSC.Services.Repositories;
+using EPSC.Services.Validations.Member;
 using EPSC.Utility.Configurations;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +32,11 @@ builder.Services.AddDbContext<EPSCDbContext>(options =>
         sqlOptions.MigrationsAssembly("EPSC.Infrastructure");
     });
 });
+
+// Registering services
+builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+builder.Services.AddScoped<IMemberService, MemberService>();
+
 
 // Identity with custom user and role
 builder.Services.AddIdentity<EPSAuthUser, EPSAuthRole>(options =>
@@ -81,12 +92,19 @@ builder.Services.AddHangfire(config =>
     config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
 
-// Controller setup
-builder.Services.AddControllers().AddJsonOptions(opt =>
-{
-    opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    opt.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-});
+// Controller setup with FluentValidation registration
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        opt.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
+
+builder.Services.AddValidatorsFromAssemblyContaining<MemberCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<MemberUpdateDtoValidator>();
 
 // Swagger setup
 builder.Services.AddEndpointsApiExplorer();
