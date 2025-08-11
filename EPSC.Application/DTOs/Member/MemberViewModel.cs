@@ -14,8 +14,7 @@ namespace EPSC.Application.DTOs.Member
         public bool IsDeleted { get; set; } = false;
         public Guid CreatedBy { get; set; }
         public Guid? UpdatedBy { get; set; } = null;
-        public Guid? DeletedBy { get; set; } = null;
-        public string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
         public DateTime DateOfBirth { get; set; }
     }
 }

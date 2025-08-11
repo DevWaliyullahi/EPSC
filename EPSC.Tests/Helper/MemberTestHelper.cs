@@ -11,7 +11,7 @@ namespace EPSC.Tests.Helper
         public static MemberUpdateDto GetValidUpdateDto(Guid id)
             => new MemberUpdateDto
             {
-                Id = id,
+                MemberId = id,
                 FirstName = "Jane",
                 LastName = "Doe",
                 Email = "jane.doe@example.com",

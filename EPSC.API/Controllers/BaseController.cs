@@ -1,4 +1,4 @@
-﻿using EPSC.API.Controllers.MembersController;
+﻿using EPSC.Application.DTOs.Contribution;
 using EPSC.Application.DTOs.Member;
 using Microsoft.AspNetCore.Mvc;
 using RPNL.Net.Utilities.ResponseUtil;
@@ -11,26 +11,29 @@ namespace EPSC.API.Controllers
     {
         protected IActionResult NotifyModelStateError()
         {
-            var erroMesg = new List<string>();
-            var erros = ModelState.Values.SelectMany(v => v.Errors);
-            foreach (var erro in erros)
+            var errorMessages = new List<string>();
+            var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+            foreach (var error in errors)
             {
-                var msg = erro.Exception == null ? erro.ErrorMessage : erro.Exception.Message;
-                erroMesg.Add(msg);
+                var message = error.Exception?.Message ?? error.ErrorMessage;
+                errorMessages.Add(message);
             }
-            ResponseModel response = new()
+
+            var response = new ResponseModel
             {
                 Code = ErrorCodes.Failed,
-                Message = erroMesg.FirstOrDefault(),
+                Message = errorMessages.FirstOrDefault() ?? "Validation failed",
                 Success = false
             };
+
             return BadRequest(response);
         }
 
         protected new IActionResult Response<T>(ResponseModel<T>? result = null)
         {
             if (result == null)
-                return BadRequest();
+                return BadRequest(new ResponseModel { Code = ErrorCodes.Failed, Message = "No response data", Success = false });
 
             if (!result.Success)
             {
@@ -39,24 +42,35 @@ namespace EPSC.API.Controllers
                 return BadRequest(result);
             }
 
-            // Handle POST requests for member creation
-            if (HttpMethods.IsPost(Request?.Method ?? string.Empty) && result.Data is MemberViewModel member)
+            // Handle POST requests for creation
+            if (HttpMethods.IsPost(Request?.Method ?? string.Empty))
             {
-                if (member.MemberId == Guid.Empty)
-                    return BadRequest("MemberId cannot be empty.");
+                // For Member creation
+                if (result.Data is MemberViewModel member)
+                {
+                    if (member.MemberId == Guid.Empty)
+                        return BadRequest(new ResponseModel { Code = ErrorCodes.Failed, Message = "MemberId cannot be empty", Success = false });
 
-                // Use the correct action name that matches your controller method
-                return CreatedAtAction(nameof(MemberController.GetMemberById), new { id = member.MemberId }, result);
+                    return CreatedAtAction("GetMemberById", "Members", new { id = member.MemberId }, result);
+                }
+
+                // For Contribution creation  
+                if (result.Data is ContributionViewModel contribution)
+                {
+                    if (contribution.ContributionId == Guid.Empty)
+                        return BadRequest(new ResponseModel { Code = ErrorCodes.Failed, Message = "ContributionId cannot be empty", Success = false });
+
+                    return CreatedAtAction("GetContribution", "Contributions", new { id = contribution.ContributionId }, result);
+                }
             }
 
-            // For all other successful operations (GET, PUT)
             return Ok(result);
         }
 
         protected new IActionResult Response(ResponseModel? result = null)
         {
             if (result == null)
-                return BadRequest();
+                return BadRequest(new ResponseModel { Code = ErrorCodes.Failed, Message = "No response data", Success = false });
 
             if (!result.Success)
             {
@@ -70,6 +84,16 @@ namespace EPSC.API.Controllers
                 return NoContent();
 
             return Ok(result);
+        }
+
+        protected string GetUserId()
+        {
+            return User?.Identity?.Name ?? "system";
+        }
+
+        protected bool IsValidGuid(string value)
+        {
+            return Guid.TryParse(value, out _);
         }
     }
 }

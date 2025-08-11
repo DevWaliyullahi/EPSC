@@ -36,10 +36,23 @@ namespace EPSC.Infrastructure.Configurations.Initializers
                     FullName = "EPSC Admin"
                 };
 
-                var result = await _userManager.CreateAsync(user, "Admin@123"); 
+                // Get admin password from environment 
+                var adminPassword = Environment.GetEnvironmentVariable("EPSC_ADMIN_PASSWORD");
+                if (string.IsNullOrWhiteSpace(adminPassword))
+                {
+                    adminPassword = "Admin@123"; // fallback
+                }
+
+                var result = await _userManager.CreateAsync(user, adminPassword);
+
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, "Admin");
+                }
+                else
+                {
+                    // Log errors 
+                    throw new Exception("Failed to create admin user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
         }

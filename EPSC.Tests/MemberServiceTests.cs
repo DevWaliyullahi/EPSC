@@ -1,7 +1,7 @@
 ﻿using EPSC.Application.DTOs.Member;
 using EPSC.Domain.Entities.Member;
 using EPSC.Services.Handler.Member;
-using EPSC.Services.Repositories;
+using EPSC.Services.Repositories.Member;
 using EPSC.Utility.Enums;
 using EPSC.Utility.Pagination;
 using Microsoft.Extensions.Logging;
@@ -89,7 +89,7 @@ namespace EPSC.Tests
 
             var dto = new MemberUpdateDto
             {
-                Id = existingMember.MemberId,
+                MemberId = existingMember.MemberId,
                 FirstName = "New",
                 LastName = "Name",
                 Email = "new@example.com",
@@ -107,7 +107,15 @@ namespace EPSC.Tests
         [Fact]
         public async Task SoftDeleteMemberAsync_Should_Mark_IsDeleted()
         {
-            var existingMember = new TMember { MemberId = Guid.NewGuid(), IsDeleted = false };
+            var existingMember = new TMember
+            {
+                MemberId = Guid.NewGuid(),
+                FirstName = "Test",   
+                LastName = "User",    
+                Email = "test@example.com",   
+                IsDeleted = false
+            };
+
             _repositoryMock.Setup(r => r.GetByIdAsync(existingMember.MemberId))
                 .ReturnsAsync(existingMember);
             _repositoryMock.Setup(r => r.Update(It.IsAny<TMember>()));
@@ -171,7 +179,7 @@ namespace EPSC.Tests
 
             var dto = new MemberUpdateDto
             {
-                Id = nonExistingId,
+                MemberId = nonExistingId,
                 FirstName = "Test",
                 LastName = "User",
                 Email = "test@example.com",

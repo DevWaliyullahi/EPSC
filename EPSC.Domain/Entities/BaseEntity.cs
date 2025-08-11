@@ -6,8 +6,8 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
-        public Guid CreatedBy { get; set; } 
-        public Guid? UpdatedBy { get; set; } = null;
+        public string CreatedBy { get; set; } = "system";
+        public string UpdatedBy { get; set; } = "system";
         public Guid? DeletedBy { get; set; } = null;
 
     }
