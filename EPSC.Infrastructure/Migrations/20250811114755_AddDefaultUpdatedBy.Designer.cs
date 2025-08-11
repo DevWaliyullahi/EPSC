@@ -4,6 +4,7 @@ using EPSC.Infrastructure.Configurations.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EPSC.Infrastructure.Migrations
 {
     [DbContext(typeof(EPSCDbContext))]
-    partial class EPSCDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250811114755_AddDefaultUpdatedBy")]
+    partial class AddDefaultUpdatedBy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

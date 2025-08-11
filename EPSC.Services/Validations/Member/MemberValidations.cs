@@ -1,130 +1,118 @@
 ﻿using EPSC.Application.DTOs.Member;
 using FluentValidation;
-using System.Reflection;
 
 namespace EPSC.Services.Validations.Member
 {
-    public abstract class MemberValidations<T> : AbstractValidator<T> where T : class
+    public abstract class MemberValidationBase<T> : AbstractValidator<T> where T : class
     {
-        public void ValidateFirstName()
+        protected void SetupNameValidation(
+            IRuleBuilder<T, string> ruleBuilder,
+            string fieldName,
+            bool isRequired = true)
         {
-            RuleFor(x => x).Custom((instance, context) =>
+            if (isRequired)
             {
-                var value = GetStringProperty(instance, "FirstName", context);
-                if (value == null) return;
-
-                if (string.IsNullOrWhiteSpace(value))
-                    context.AddFailure("FirstName", "First name is required.");
-                else if (value.Length > 50)
-                    context.AddFailure("FirstName", "First name must not exceed 50 characters.");
-            });
-        }
-
-        public void ValidateLastName()
-        {
-            RuleFor(x => x).Custom((instance, context) =>
-            {
-                var value = GetStringProperty(instance, "LastName", context);
-                if (value == null) return;
-
-                if (string.IsNullOrWhiteSpace(value))
-                    context.AddFailure("LastName", "Last name is required.");
-                else if (value.Length > 50)
-                    context.AddFailure("LastName", "Last name must not exceed 50 characters.");
-            });
-        }
-
-        public void ValidateEmail()
-        {
-            RuleFor(x => x).Custom((instance, context) =>
-            {
-                var value = GetStringProperty(instance, "Email", context);
-                if (value == null) return;
-
-                if (string.IsNullOrWhiteSpace(value))
-                    context.AddFailure("Email", "Email is required.");
-                else if (!System.Net.Mail.MailAddress.TryCreate(value, out _))
-                    context.AddFailure("Email", "Email must be valid.");
-            });
-        }
-
-        public void ValidatePhone()
-        {
-            RuleFor(x => x).Custom((instance, context) =>
-            {
-                var value = GetStringProperty(instance, "PhoneNumber", context);
-                if (value == null) 
-                    return;
-
-                if (string.IsNullOrWhiteSpace(value))
-                    context.AddFailure("PhoneNumber", "Phone number is required.");
-                else if (!System.Text.RegularExpressions.Regex.IsMatch(value, @"^\+?[1-9]\d{1,14}$"))
-                    context.AddFailure("PhoneNumber", "Phone number is invalid.");
-            });
-        }
-
-        public void ValidateDateOfBirth()
-        {
-            RuleFor(x => x).Custom((instance, context) =>
-            {
-                var property = typeof(T).GetProperty("DateOfBirth", BindingFlags.Public | BindingFlags.Instance);
-                if (property == null) 
-                    return;
-
-                var value = property.GetValue(instance) as DateTime?;
-                if (value == null) 
-                    return;
-
-                if (value >= DateTime.Today)
-                    context.AddFailure("DateOfBirth", "Date of birth must be in the past.");
-                else
-                {
-                    var age = DateTime.Today.Year - value.Value.Year;
-                    if (value.Value.Date > DateTime.Today.AddYears(-age)) age--;
-
-                    if (age < 18 || age > 70)
-                        context.AddFailure("DateOfBirth", "Member must be between 18 and 70 years old.");
-                }
-            });
-        }
-
-
-        private string? GetStringProperty(object instance, string propertyName, ValidationContext<T> context)
-        {
-            var property = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            if (property == null)
-            {
-                context.AddFailure(propertyName, $"Property '{propertyName}' not found.");
-                return null;
+                ruleBuilder.NotEmpty()
+                    .WithMessage($"{fieldName} is required.");
             }
-            return property.GetValue(instance) as string;
+
+            ruleBuilder.MaximumLength(50)
+                .WithMessage($"{fieldName} must not exceed 50 characters.");
+        }
+
+        protected void SetupEmailValidation(
+            IRuleBuilder<T, string> ruleBuilder,
+            bool isRequired = true)
+        {
+            if (isRequired)
+            {
+                ruleBuilder.NotEmpty()
+                    .WithMessage("Email is required.");
+            }
+
+            ruleBuilder.EmailAddress()
+                .WithMessage("Email must be valid.");
+        }
+
+        protected void SetupPhoneValidation(
+            IRuleBuilder<T, string> ruleBuilder,
+            bool isRequired = true)
+        {
+            if (isRequired)
+            {
+                ruleBuilder.NotEmpty()
+                    .WithMessage("Phone number is required.");
+            }
+
+            ruleBuilder.Matches(@"^\+?[1-9]\d{1,14}$")
+                .WithMessage("Phone number is invalid.");
+        }
+
+        protected bool IsValidAge(DateTime? dateOfBirth)
+        {
+            if (!dateOfBirth.HasValue) return true;
+
+            var age = DateTime.Today.Year - dateOfBirth.Value.Year;
+            if (dateOfBirth.Value.Date > DateTime.Today.AddYears(-age))
+                age--;
+
+            return age >= 18 && age <= 70;
         }
     }
 
-    public class MemberCreateDtoValidator : MemberValidations<MemberCreateDto>
+    public class MemberCreateDtoValidator : MemberValidationBase<MemberCreateDto>
     {
         public MemberCreateDtoValidator()
         {
-            ValidateFirstName();
-            ValidateLastName();
-            ValidateEmail();
-            ValidateDateOfBirth();
-            ValidatePhone();
+            SetupNameValidation(RuleFor(x => x.FirstName), "First name");
+            SetupNameValidation(RuleFor(x => x.LastName), "Last name");
+            SetupEmailValidation(RuleFor(x => x.Email));
+            SetupPhoneValidation(RuleFor(x => x.PhoneNumber));
+
+            RuleFor(x => x.DateOfBirth)
+                .NotEmpty().WithMessage("Date of birth is required.")
+                .LessThan(DateTime.Today).WithMessage("Date of birth must be in the past.")
+                .Must(dateOfBirth => dateOfBirth.HasValue && IsValidAge(dateOfBirth))
+                .WithMessage("Member must be between 18 and 70 years old.");
         }
     }
 
-    public class MemberUpdateDtoValidator : MemberValidations<MemberUpdateDto>
+    public class MemberUpdateDtoValidator : MemberValidationBase<MemberUpdateDto>
     {
         public MemberUpdateDtoValidator()
         {
-            ValidateFirstName();
-            ValidateLastName();
-            ValidatePhone();
-            ValidateEmail();
-            ValidateDateOfBirth();
+            RuleFor(x => x.MemberId)
+                .NotEmpty()
+                .WithMessage("Member Id is required for updates.");
 
-            RuleFor(x => x.Id)
-                .NotEmpty().WithMessage("Member Id is required for updates.");
+            // Validate only when values are not null or empty
+            When(x => !string.IsNullOrEmpty(x.FirstName), () =>
+            {
+                SetupNameValidation(RuleFor(x => x.FirstName), "First name");
+            });
+
+            When(x => !string.IsNullOrEmpty(x.LastName), () =>
+            {
+                SetupNameValidation(RuleFor(x => x.LastName), "Last name");
+            });
+
+            When(x => !string.IsNullOrEmpty(x.Email), () =>
+            {
+                SetupEmailValidation(RuleFor(x => x.Email));
+            });
+
+            When(x => !string.IsNullOrEmpty(x.PhoneNumber), () =>
+            {
+                SetupPhoneValidation(RuleFor(x => x.PhoneNumber));
+            });
+
+            When(x => x.DateOfBirth.HasValue, () =>
+            {
+                RuleFor(x => x.DateOfBirth)
+                    .LessThan(DateTime.Today).WithMessage("Date of birth must be in the past.")
+                    .Must(dateOfBirth => !dateOfBirth.HasValue || IsValidAge(dateOfBirth))
+                    .WithMessage("Member must be between 18 and 70 years old.");
+            });
         }
     }
 }

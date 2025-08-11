@@ -18,11 +18,16 @@ namespace EPSC.Infrastructure.Configurations
             // Identity Core setup
             services.AddIdentity<EPSAuthUser, EPSAuthRole>(options =>
             {
-                options.Password.RequiredLength = 6;
+                options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
                 options.Password.RequireNonAlphanumeric = false;
+
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+
+                options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<EPSCDbContext>()
             .AddDefaultTokenProviders();

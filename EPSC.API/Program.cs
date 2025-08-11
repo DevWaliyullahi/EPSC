@@ -1,27 +1,25 @@
+using EPSC.Application.Interfaces.IContributionService;
 using EPSC.Application.Interfaces.IMemberService;
+using EPSC.Infrastructure.Configurations;
 using EPSC.Infrastructure.Configurations.Data;
 using EPSC.Infrastructure.Configurations.Initializers;
-using EPSC.Infrastructure.Identity.Auth;
+using EPSC.Infrastructure.Hangfire;
+using EPSC.Infrastructure.Middleware;
+using EPSC.Services.Handler.Contribution;
 using EPSC.Services.Handler.Member;
-using EPSC.Services.Repositories;
+using EPSC.Services.Repositories.Contribution;
+using EPSC.Services.Repositories.Member;
 using EPSC.Services.Validations.Member;
-using EPSC.Utility.Configurations;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Hangfire;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+using Hangfire.SqlServer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuration 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.Configure<GlobalSettings>(builder.Configuration.GetSection("GlobalSettings"));
 
 // DbContext
 builder.Services.AddDbContext<EPSCDbContext>(options =>
@@ -33,63 +31,35 @@ builder.Services.AddDbContext<EPSCDbContext>(options =>
     });
 });
 
-// Registering services
+// Authentication & Authorization
+builder.Services.InitService(builder.Configuration);
+
+// Repository services
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+builder.Services.AddScoped<IContributionRepository, ContributionRepository>();
+
+// Application services
 builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IContributionService, ContributionService>();
 
+// Database Initializer
+builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
-// Identity with custom user and role
-builder.Services.AddIdentity<EPSAuthUser, EPSAuthRole>(options =>
-{
-    options.Password.RequiredLength = 6;
-    options.Password.RequireDigit = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<EPSCDbContext>()
-.AddDefaultTokenProviders();
-
-// JWT Authentication
-var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
-if (jwtSettingsSection.Exists())
-{
-    var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
-    if (jwtSettings != null)
+// Hangfire setup - Background job processing
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new SqlServerStorageOptions
     {
-        var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.Zero,
+        UseRecommendedIsolationLevel = true,
+        DisableGlobalLocks = true
+    }));
 
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-        });
-    }
-    else
-    {
-        throw new InvalidOperationException("JwtSettings configuration is missing or invalid.");
-    }
-}
-else
-{
-    throw new InvalidOperationException("JwtSettings section is missing in the configuration.");
-}
-
-// Hangfire setup
-builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Hangfire server
 builder.Services.AddHangfireServer();
 
 // Controller setup with FluentValidation registration
@@ -100,11 +70,13 @@ builder.Services.AddControllers()
         opt.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
+// FluentValidation setup
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 
-builder.Services.AddValidatorsFromAssemblyContaining<MemberCreateDtoValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<MemberUpdateDtoValidator>();
+// Register all validators
+builder.Services.AddValidatorsFromAssembly(typeof(MemberCreateDtoValidator).Assembly);
+
 
 // Swagger setup
 builder.Services.AddEndpointsApiExplorer();
@@ -114,7 +86,10 @@ builder.Services.AddSwaggerGen(opt =>
 
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    opt.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+    {
+        opt.IncludeXmlComments(xmlPath);
+    }
 
     opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -137,10 +112,22 @@ builder.Services.AddSwaggerGen(opt =>
     });
 });
 
-// Scoped services
-builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+// Add Role-based Authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireEmployerRole", policy => policy.RequireRole("Employer"));
+    options.AddPolicy("RequireContributorRole", policy => policy.RequireRole("Contributor"));
+});
+
+
+
 
 var app = builder.Build();
+
+// global error handling middleware 
+app.UseMiddleware<GlobalErrorHandlingMiddleware>();
+
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())
@@ -153,21 +140,45 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
 app.UseHttpsRedirection();
+
 app.UseRouting();
-app.UseAuthentication(); 
+
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Hangfire dashboard
-app.UseHangfireDashboard("/hangfire");
-
-// Database seeding
-using (var scope = app.Services.CreateScope())
+// Secure Hangfire dashboard with Admin-only access
+if (app.Environment.IsDevelopment())
 {
-    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
-    await initializer.SeedAsync();
+    app.UseHangfireDashboard("/hangfire");
+}
+else
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAuthorizationFilter() }
+    });
 }
 
+
+// Database seeding with error logging
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+        await initializer.SeedAsync();
+        logger.LogInformation("Database seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error occurred during database seeding.");
+        throw; 
+    }
+}
+
+// Map controllers
 app.MapControllers();
+
 app.Run();

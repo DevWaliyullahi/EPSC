@@ -1,7 +1,7 @@
 ﻿using EPSC.Application.DTOs.Member;
 using EPSC.Application.Interfaces.IMemberService;
 using EPSC.Domain.Entities.Member;
-using EPSC.Services.Repositories;
+using EPSC.Services.Repositories.Member;
 using EPSC.Utility.Pagination;
 using Microsoft.Extensions.Logging;
 using RPNL.Net.Utilities.ResponseUtil;
@@ -45,7 +45,7 @@ namespace EPSC.Services.Handler.Member
                     LastName = dto.LastName,
                     Email = dto.Email,
                     PhoneNumber = dto.PhoneNumber,
-                    DateOfBirth = dto.DateOfBirth,
+                    DateOfBirth = dto.DateOfBirth.HasValue ? dto.DateOfBirth.Value : throw new ArgumentException("DateOfBirth cannot be null"),
                     IsDeleted = false
                 };
 
@@ -64,7 +64,7 @@ namespace EPSC.Services.Handler.Member
                     PhoneNumber = member.PhoneNumber,
                     DateOfBirth = member.DateOfBirth,
                     CreatedAt = member.CreatedAt,
-                    CreatedBy = member.CreatedBy
+                    CreatedBy = member.CreatedBy != null ? Guid.Parse(member.CreatedBy) : Guid.Empty,
                 };
 
                 _logger.LogInformation("Created member {MemberId} with email {Email}", member.MemberId, member.Email);
@@ -114,9 +114,8 @@ namespace EPSC.Services.Handler.Member
                     UpdatedAt = member.UpdatedAt,
                     DeletedAt = member.DeletedAt,
                     IsDeleted = member.IsDeleted,
-                    CreatedBy = member.CreatedBy,
-                    UpdatedBy = member.UpdatedBy,
-                    DeletedBy = member.DeletedBy
+                    CreatedBy = member.CreatedBy != null ? Guid.Parse(member.CreatedBy) : Guid.Empty,
+                    UpdatedBy = member.UpdatedBy != null ? Guid.Parse(member.UpdatedBy) : null
                 };
             }
             catch (Exception ex)
@@ -192,7 +191,7 @@ namespace EPSC.Services.Handler.Member
                 member.LastName = dto.LastName;
                 member.Email = dto.Email;
                 member.PhoneNumber = dto.PhoneNumber;
-                member.DateOfBirth = dto.DateOfBirth;
+                member.DateOfBirth = dto.DateOfBirth.HasValue ? dto.DateOfBirth.Value : throw new ArgumentException("DateOfBirth cannot be null");
 
                 _repository.Update(member);
                 await _repository.SaveChangesAsync();
@@ -212,9 +211,8 @@ namespace EPSC.Services.Handler.Member
                     UpdatedAt = member.UpdatedAt,
                     DeletedAt = member.DeletedAt,
                     IsDeleted = member.IsDeleted,
-                    CreatedBy = member.CreatedBy,
-                    UpdatedBy = member.UpdatedBy,
-                    DeletedBy = member.DeletedBy
+                    CreatedBy = member.CreatedBy != null ? Guid.Parse(member.CreatedBy) : Guid.Empty,
+                    UpdatedBy = member.UpdatedBy != null ? Guid.Parse(member.UpdatedBy) : null
                 };
 
                 _logger.LogInformation("Updated member {MemberId}", member.MemberId);

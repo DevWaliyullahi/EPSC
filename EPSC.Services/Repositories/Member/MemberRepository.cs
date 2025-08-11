@@ -4,7 +4,7 @@ using EPSC.Infrastructure.Configurations.Data;
 using EPSC.Utility.Pagination;
 using Microsoft.EntityFrameworkCore;
 
-namespace EPSC.Services.Repositories
+namespace EPSC.Services.Repositories.Member
 {
     public class MemberRepository : IMemberRepository
     {

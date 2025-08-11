@@ -3,7 +3,7 @@ using EPSC.Application.DTOs.Member;
 using EPSC.Domain.Entities.Member;
 using EPSC.Infrastructure.Configurations.Data;
 using EPSC.Services.Handler.Member;
-using EPSC.Services.Repositories;
+using EPSC.Services.Repositories.Member;
 using EPSC.Tests.Helper;
 using EPSC.Utility.Enums;
 using EPSC.Utility.Pagination;
